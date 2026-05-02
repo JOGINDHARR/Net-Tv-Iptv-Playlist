@@ -104,11 +104,21 @@ class NetTvScraper:
         return m3u_content
 
 def main():
-    # In a real GitHub Action, you'd store the token in secrets
+    # Priority 1: Environment Variable (GitHub Secrets)
     token = os.environ.get('NETTV_TOKEN')
+    
+    # Priority 2: Local nettv.json file
+    if not token and os.path.exists('nettv.json'):
+        try:
+            with open('nettv.json', 'r') as f:
+                data = json.load(f)
+                token = json.dumps(data)
+                print("Using token from nettv.json")
+        except Exception as e:
+            print(f"Error reading nettv.json: {e}")
+
     if not token:
-        print("Error: NETTV_TOKEN environment variable not set.")
-        # Create a dummy m3u for testing if needed or exit
+        print("Error: No token found in environment variable or nettv.json")
         return
 
     scraper = NetTvScraper(token)
