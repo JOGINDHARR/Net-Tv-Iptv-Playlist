@@ -1,51 +1,52 @@
 # 🇳🇵 Net TV IPTV Playlist - Ultimate Nepal Live TV Scraper
 
 <p align="center">
-  <img src="https://img.shields.io/github/stars/DIWASXD/Net-Tv-Iptv-Playlist?style=for-the-badge&color=blue" alt="Stars">
-  <img src="https://img.shields.io/github/forks/DIWASXD/Net-Tv-Iptv-Playlist?style=for-the-badge&color=green" alt="Forks">
-  <img src="https://img.shields.io/github/issues/DIWASXD/Net-Tv-Iptv-Playlist?style=for-the-badge&color=red" alt="Issues">
-  <img src="https://img.shields.io/github/license/DIWASXD/Net-Tv-Iptv-Playlist?style=for-the-badge&color=orange" alt="License">
+  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=F70000&center=true&vCenter=true&width=435&lines=NET+TV+SCRAPER+BY+DIWAS;NEPAL+IPTV+PLAYLIST;AUTO+UPDATED+LINKS;DEV:+@DIWASXD+ON+TG" alt="Typing SVG" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/stars/JOGINDHARR/Net-Tv-Iptv-Playlist?style=for-the-badge&color=blue" alt="Stars">
+  <img src="https://img.shields.io/github/forks/JOGINDHARR/Net-Tv-Iptv-Playlist?style=for-the-badge&color=green" alt="Forks">
+  <img src="https://img.shields.io/github/issues/JOGINDHARR/Net-Tv-Iptv-Playlist?style=for-the-badge&color=red" alt="Issues">
+  <img src="https://img.shields.io/github/license/JOGINDHARR/Net-Tv-Iptv-Playlist?style=for-the-badge&color=orange" alt="License">
 </p>
 
 ---
 
 ## 🚀 Overview
-**Net TV IPTV Playlist** is a powerful, fully automated **Net TV Scraper** and **M3U Generator** designed for the Nepalese community. This project provides a seamless way to stream **Nepal Live TV** directly on your favorite IPTV players (VLC, Kodi, OttNavigator, etc.) with auto-updating links.
-
-> [!IMPORTANT]
-> This project is for educational purposes. It automates the generation of playlists from official sources to ensure working links for personal use.
+**Net TV IPTV Playlist** is a professional-grade **Net TV Scraper** and **M3U Generator**. It automates the extraction of live TV streams from Net TV Nepal and provides a fallback to high-quality public streams. This ensures you always have a working **Nepal Live TV** playlist for VLC, Kodi, or any IPTV player.
 
 ---
 
-## ✨ Key Features
-- ✅ **Auto-Updating Playlist**: Powered by GitHub Actions, links are refreshed every 6 hours.
-- ✅ **High-Quality Streams**: Direct m3u8 links from Net TV servers.
-- ✅ **Categorized Channels**: News, Entertainment, Sports, and Movies organized for easy navigation.
-- ✅ **Kodi Compatible**: Includes necessary KODIPROP headers for seamless playback.
-- ✅ **SEO Optimized**: Designed to rank top for Nepal IPTV searches.
+## ✨ Features
+- ⚡ **Auto-Update**: GitHub Actions refreshes links every 6 hours.
+- 📡 **Dual Mode**: Fetches premium Net TV channels (if token provided) + Public HD channels.
+- 📺 **Multi-Device**: Works on Android TV, PC, iOS, and Kodi (with KODIPROP support).
+- 🛠️ **No Server Needed**: Runs entirely on GitHub infrastructure.
 
 ---
 
-## 📂 Project Metadata & Tags
-To ensure this repository reaches the top of search rankings, we target the following keywords:
-`Net Tv Scrapper`, `Net Tv M3u`, `Net Tv By Diwas`, `Net Tv Iptv List`, `Nepal Iptv`, `Net Tv Playlist`, `Nepali Live TV`, `Free IPTV Nepal`.
+## 📂 SEO & Tags
+`Net Tv Scrapper` | `Net Tv M3u` | `Net Tv By Diwas` | `Net Tv Iptv List` | `Nepal Iptv` | `Net Tv Playlist` | `Nepali Live TV` | `Free IPTV Nepal` | `Diwas IPTV` | `Net TV Nepal API`
 
 ---
 
-## 🛠️ How to Use
-1. **Direct Link**: Use the following URL in your IPTV player:
-   ```text
-   https://raw.githubusercontent.com/DIWASXD/Net-Tv-Iptv-Playlist/main/playlist.m3u
-   ```
-2. **EPG (Electronic Program Guide)**:
-   ```text
-   https://raw.githubusercontent.com/DIWASXD/Net-Tv-Iptv-Playlist/main/webtv.xml.gz
-   ```
+## 🛠️ Installation & Usage
+### 1. Direct M3U Link
+Copy and paste this URL into your IPTV player:
+```text
+https://raw.githubusercontent.com/JOGINDHARR/Net-Tv-Iptv-Playlist/main/playlist.m3u
+```
+
+### 2. Manual Setup (For Developers)
+1. Fork this repository.
+2. Create a `nettv.json` file with your access token (optional).
+3. Enable **GitHub Actions** in the repository settings.
 
 ---
 
 ## 👨‍💻 Developer Information
-This project is maintained and developed by **Diwas**. Connect with me for updates and support!
+This project is built and maintained by **Diwas**.
 
 | Platform | Handle |
 | :--- | :--- |
@@ -56,10 +57,10 @@ This project is maintained and developed by **Diwas**. Connect with me for updat
 ---
 
 ## 🛡️ Disclaimer
-This repository does not host any media files. It only generates a playlist of publicly available streams. The developer is not responsible for any copyright issues. If you are a copyright owner and want a channel removed, please open an issue.
+This project is for educational purposes only. We do not host any media files. All streams are sourced from public or user-provided APIs.
 
 ---
 
 <p align="center">
-  Made with ❤️ by <b>DIWASXD</b>
+  <img src="https://capsule-render.vercel.app/render?type=waving&color=auto&height=100&section=footer" />
 </p>

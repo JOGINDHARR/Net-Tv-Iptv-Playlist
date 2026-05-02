@@ -1,153 +1,131 @@
+"""
+🚀 Net TV Nepal IPTV Scraper & M3U Generator
+Developed by: @DIWASXD & @DIWAZZ
+Version: 2.0.0
+Description: Automated IPTV playlist generator for Net TV Nepal with public fallback.
+"""
+
 import requests
 import json
 import os
 import base64
-import time
+import sys
 from datetime import datetime
 
-# Configuration
-COMMON_HEADER = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0',
-    'Accept': '*/*',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Referer': 'https://webtv.nettv.com.np/',
-    'Origin': 'https://webtv.nettv.com.np',
+# --- Configuration ---
+CONFIG = {
+    "TVG_URL": "https://raw.githubusercontent.com/JOGINDHARR/Net-Tv-Iptv-Playlist/main/webtv.xml.gz",
+    "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "REFERER": "https://webtv.nettv.com.np/",
+    "ORIGIN": "https://webtv.nettv.com.np",
+    "OUTPUT_FILE": "playlist.m3u"
 }
 
-class NetTvScraper:
-    def __init__(self, token_json=None):
-        self.token_json = token_json
+HEADERS = {
+    'User-Agent': CONFIG["USER_AGENT"],
+    'Accept': '*/*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': CONFIG["REFERER"],
+    'Origin': CONFIG["ORIGIN"],
+}
+
+# --- Public Channels Fallback ---
+PUBLIC_CHANNELS = [
+    {"id": "p1", "name": "Kantipur TV HD", "logo": "https://upload.wikimedia.org/wikipedia/en/2/2c/Kantipur_TV_HD_Logo.png", "url": "https://kantipur-hls.ykms.com.np/kantipur/kantipur/playlist.m3u8", "group": "News"},
+    {"id": "p2", "name": "Nepal TV HD", "logo": "https://upload.wikimedia.org/wikipedia/en/0/05/Nepal_Television_logo.png", "url": "https://ntv.ykms.com.np/ntv/ntv/playlist.m3u8", "group": "News"},
+    {"id": "p3", "name": "AP1 HD", "logo": "https://ap1.tv/wp-content/uploads/2017/03/ap1-logo.png", "url": "https://ap1-hls.ykms.com.np/ap1/ap1/playlist.m3u8", "group": "Entertainment"},
+    {"id": "p4", "name": "Himalaya TV HD", "logo": "https://himalayatv.com/wp-content/themes/himalaya/images/logo.png", "url": "https://himalaya-hls.ykms.com.np/himalaya/himalaya/playlist.m3u8", "group": "News"},
+    {"id": "p5", "name": "Image Channel", "logo": "https://imagechannel.com.np/wp-content/uploads/2018/01/image-logo.png", "url": "https://image-hls.ykms.com.np/image/image/playlist.m3u8", "group": "News"},
+    {"id": "p6", "name": "ABC News Nepal", "logo": "https://abcnews.com.np/wp-content/uploads/2017/08/abc-logo.png", "url": "https://abc-hls.ykms.com.np/abc/abc/playlist.m3u8", "group": "News"}
+]
+
+class NetTvEngine:
+    def __init__(self, token_data=None):
+        self.token_data = token_data
         self.access_token = None
-        self.jwt_data = None
-        if token_json:
-            self.load_token(token_json)
+        self.jwt_payload = None
+        if token_data:
+            self._initialize_auth(token_data)
 
-    def load_token(self, token_json):
-        data = json.loads(token_json)
-        self.access_token = data.get('access_token')
-        if self.access_token:
-            # Decode JWT to get subscriber info
-            payload = self.access_token.split('.')[1]
-            # Add padding if necessary
-            payload += '=' * (4 - len(payload) % 4)
-            self.jwt_data = json.loads(base64.b64decode(payload).decode('utf-8'))
-
-    def get_wms_auth(self):
-        if not self.access_token:
-            return None
-        headers = {**COMMON_HEADER, 'Authorization': f'Bearer {self.access_token}'}
+    def _initialize_auth(self, token_data):
         try:
-            res = requests.get('https://ott-resources.geniustv.geniussystems.com.np/nimble/wmsauthsign', headers=headers)
+            data = json.loads(token_data) if isinstance(token_data, str) else token_data
+            self.access_token = data.get('access_token')
+            if self.access_token:
+                payload_b64 = self.access_token.split('.')[1]
+                payload_b64 += '=' * (4 - len(payload_b64) % 4)
+                self.jwt_payload = json.loads(base64.b64decode(payload_b64).decode('utf-8'))
+        except Exception as e:
+            print(f"[-] Auth Init Error: {e}")
+
+    def get_wms_signature(self):
+        if not self.access_token: return None
+        url = 'https://ott-resources.geniustv.geniussystems.com.np/nimble/wmsauthsign'
+        try:
+            res = requests.get(url, headers={**HEADERS, 'Authorization': f'Bearer {self.access_token}'}, timeout=10)
             return res.json().get('wmsauthsign')
-        except:
-            return None
+        except: return None
 
-    def fetch_channels(self):
-        if not self.jwt_data:
-            return None
-        
-        reseller_id = self.jwt_data['params']['reseller_id']
-        subscriber_id = self.jwt_data['sub']
-        serial = self.jwt_data['params']['serial']
-        
-        url = f"https://ott-livetv-resources.geniustv.geniussystems.com.np/subscriber/livetv/v1/namespaces/{reseller_id}/subscribers/{subscriber_id}/serial/{serial}"
-        headers = {**COMMON_HEADER, 'Authorization': f'Bearer {self.access_token}'}
-        
+    def fetch_nettv_data(self):
+        if not self.jwt_payload: return None
         try:
-            res = requests.get(url, headers=headers)
+            p = self.jwt_payload['params']
+            url = f"https://ott-livetv-resources.geniustv.geniussystems.com.np/subscriber/livetv/v1/namespaces/{p['reseller_id']}/subscribers/{self.jwt_payload['sub']}/serial/{p['serial']}"
+            res = requests.get(url, headers={**HEADERS, 'Authorization': f'Bearer {self.access_token}'}, timeout=15)
             return res.json()
-        except:
+        except Exception as e:
+            print(f"[-] Data Fetch Error: {e}")
             return None
 
-    def generate_m3u(self):
-        data = self.fetch_channels()
-        
-        # Public Fallback Channels
-        public_channels = [
-            {"id": "p1", "name": "Kantipur TV HD", "logo": "https://upload.wikimedia.org/wikipedia/en/2/2c/Kantipur_TV_HD_Logo.png", "url": "https://kantipur-hls.ykms.com.np/kantipur/kantipur/playlist.m3u8", "group": "News"},
-            {"id": "p2", "name": "Nepal TV HD", "logo": "https://upload.wikimedia.org/wikipedia/en/0/05/Nepal_Television_logo.png", "url": "https://ntv.ykms.com.np/ntv/ntv/playlist.m3u8", "group": "News"},
-            {"id": "p3", "name": "AP1 HD", "logo": "https://ap1.tv/wp-content/uploads/2017/03/ap1-logo.png", "url": "https://ap1-hls.ykms.com.np/ap1/ap1/playlist.m3u8", "group": "Entertainment"},
-            {"id": "p4", "name": "Himalaya TV HD", "logo": "https://himalayatv.com/wp-content/themes/himalaya/images/logo.png", "url": "https://himalaya-hls.ykms.com.np/himalaya/himalaya/playlist.m3u8", "group": "News"}
-        ]
+    def build_m3u(self):
+        print("[+] Building M3U Playlist...")
+        m3u = f"#EXTM3U x-tvg-url=\"{CONFIG['TVG_URL']}\"\n"
+        m3u += f"# Created by: @DIWASXD | Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
 
-        m3u_content = "#EXTM3U x-tvg-url=\"https://raw.githubusercontent.com/DIWASXD/Net-Tv-Iptv-Playlist/main/webtv.xml.gz\"\n"
-        m3u_content += f"# Generated by Net TV Scraper | Dev: @DIWASXD | Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        # 1. Add Public Channels
+        print(f"[+] Adding {len(PUBLIC_CHANNELS)} Public Channels...")
+        for ch in PUBLIC_CHANNELS:
+            m3u += f'#EXTINF:-1 tvg-id="{ch["id"]}" tvg-logo="{ch["logo"]}" group-title="{ch["group"]}", {ch["name"]}\n'
+            m3u += f'{ch["url"]}\n\n'
 
-        # Add Public Channels First
-        for pch in public_channels:
-            m3u_content += f'#EXTINF:-1 tvg-id="{pch["id"]}" tvg-logo="{pch["logo"]}" group-title="{pch["group"]}", {pch["name"]}\n'
-            m3u_content += f'{pch["url"]}\n\n'
-
-        if not data or 'result' not in data:
-            print("No Net TV token provided, only public channels added.")
-            return m3u_content
-        
-        wms_sign = self.get_wms_auth()
-        result = data['result']
-        categories = {c['id']: c['category'] for c in result['categories']}
-        channel_map = result['category_channel_map']
-        channels = result['channels']
-        
-        m3u_content = "#EXTM3U x-tvg-url=\"https://raw.githubusercontent.com/DIWASXD/Net-Tv-Iptv-Playlist/main/webtv.xml.gz\"\n"
-        m3u_content += f"# Generated by Net TV Scraper | Dev: @DIWASXD | Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-        
-        for ch in channels:
-            ch_id = ch['id']
-            # Find categories for this channel
-            ch_cats = [categories.get(m['category_id'], 'Uncategorized') for m in channel_map if m['channel_id'] == ch_id]
-            group_title = ch_cats[0] if ch_cats else "General"
-            
-            logo = ch.get('logo', '')
-            name = ch.get('name', 'Unknown')
-            
-            # Construct stream URL
-            if ch.get('channel_urls'):
-                orig_url = ch['channel_urls'][0]['path']
-                # Net TV links usually require wmsAuthSign
-                stream_url = f"{orig_url}"
-                if wms_sign:
-                    if '?' in stream_url:
-                        stream_url += f"&wmsAuthSign={wms_sign}"
-                    else:
-                        stream_url += f"?wmsAuthSign={wms_sign}"
+        # 2. Add Net TV Channels if Token exists
+        nettv_data = self.fetch_nettv_data()
+        if nettv_data and 'result' in nettv_data:
+            print("[+] Net TV Token detected. Fetching premium channels...")
+            wms = self.get_wms_signature()
+            res = nettv_data['result']
+            cats = {c['id']: c['category'] for c in res['categories']}
+            for ch in res['channels']:
+                group = cats.get(res['category_channel_map'][0]['category_id'], "General") # Simplified mapping
+                stream = ch['channel_urls'][0]['path']
+                if wms: stream += f"{'&' if '?' in stream else '?' }wmsAuthSign={wms}"
                 
-                m3u_content += f'#EXTINF:-1 tvg-id="{ch_id}" tvg-logo="{logo}" group-title="{group_title}", {name}\n'
-                m3u_content += f'#KODIPROP:inputstream=inputstream.adaptive\n'
-                m3u_content += f'#KODIPROP:inputstream.adaptive.manifest_type=hls\n'
-                m3u_content += f'#KODIPROP:http-origin=https://webtv.nettv.com.np\n'
-                m3u_content += f'#KODIPROP:http-referrer=https://webtv.nettv.com.np/\n'
-                m3u_content += f'#KODIPROP:http-User-Agent={COMMON_HEADER["User-Agent"]}\n'
-                m3u_content += f"{stream_url}\n\n"
-                
-        return m3u_content
+                m3u += f'#EXTINF:-1 tvg-id="ntv-{ch["id"]}" tvg-logo="{ch["logo"]}" group-title="{group}", {ch["name"]}\n'
+                m3u += f'#KODIPROP:inputstream=inputstream.adaptive\n'
+                m3u += f'#KODIPROP:inputstream.adaptive.manifest_type=hls\n'
+                m3u += f'#KODIPROP:http-origin={CONFIG["ORIGIN"]}\n'
+                m3u += f'#KODIPROP:http-referrer={CONFIG["REFERER"]}\n'
+                m3u += f'#KODIPROP:http-User-Agent={CONFIG["USER_AGENT"]}\n'
+                m3u += f'{stream}\n\n'
+        else:
+            print("[!] No valid Net TV token found. Skipping premium channels.")
+
+        return m3u
 
 def main():
-    # Priority 1: Environment Variable (GitHub Secrets)
     token = os.environ.get('NETTV_TOKEN')
-    
-    # Priority 2: Local nettv.json file
     if not token and os.path.exists('nettv.json'):
         try:
             with open('nettv.json', 'r') as f:
-                data = json.load(f)
-                token = json.dumps(data)
-                print("Using token from nettv.json")
-        except Exception as e:
-            print(f"Error reading nettv.json: {e}")
+                token = json.load(f)
+        except: pass
 
-    if not token:
-        print("Error: No token found in environment variable or nettv.json")
-        return
-
-    scraper = NetTvScraper(token)
-    m3u = scraper.generate_m3u()
+    engine = NetTvEngine(token)
+    content = engine.build_m3u()
     
-    if m3u:
-        with open('playlist.m3u', 'w', encoding='utf-8') as f:
-            f.write(m3u)
-        print("Playlist generated successfully!")
-    else:
-        print("Failed to generate playlist.")
+    with open(CONFIG["OUTPUT_FILE"], "w", encoding="utf-8") as f:
+        f.write(content)
+    print(f"[✅] Success! Playlist saved to {CONFIG['OUTPUT_FILE']}")
 
 if __name__ == "__main__":
     main()
